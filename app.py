@@ -15,18 +15,20 @@ logging.basicConfig(level=logging.DEBUG)
 API_KEY = os.getenv('API_KEY', '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')
 SEARCH_API_KEY = os.getenv('SEARCH_API_KEY', '0fce37158be0d3b9fe4fdadb58c4327eb092cd30f68bda8a1d601172f509c524')
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
-# For Vercel, we'll use in-memory storage instead of file storage
-conversation_history = [
-    {"role": "system", "content": "You are a helpful assistant that provides quick and concise responses."}
-]
+# Initialize system message
+SYSTEM_MESSAGE = {"role": "system", "content": "You are a helpful assistant that provides quick and concise responses."}
 
-headers = {
-    "Authorization": f"Bearer {API_KEY}",
-    "Content-Type": "application/json",
-    "HTTP-Referer": "https://chat-bot1-umber.vercel.app/",  # Will update after deployment
-    "X-Title": "Python Chatbot",
-    "OpenAI-Organization": "org-123"  # Required by OpenRouter 
-}
+def get_conversation_history():
+    # Start with system message for each new conversation
+    return [SYSTEM_MESSAGE]
+
+def get_headers():
+    return {
+        "Authorization": f"Bearer {API_KEY}",
+        "Content-Type": "application/json",
+        "HTTP-Referer": request.headers.get('Origin', '*'),  # Dynamically get the origin
+        "X-Title": "Python Chatbot"
+    }
 
 # Function to trim conversation history
 def trim_conversation_history():
@@ -48,6 +50,9 @@ def chat():
     if not user_message:
         return jsonify({"error": "No message provided"}), 400
     
+    # Initialize conversation history for this request
+    conversation_history = get_conversation_history()
+    
     # Add the user's message to conversation history
     conversation_history.append({"role": "user", "content": user_message})
     
@@ -56,10 +61,12 @@ def chat():
         if any(keyword in user_message.lower() for keyword in ["who", "what", "when", "where", "how", "current", "latest", "news", "weather"]):
             real_time_info = web_search(user_message)
             # Inject real-time info as context
-            conversation_history.append({"role": "system", "content": real_time_info})
+            if real_time_info:
+                conversation_history.append({"role": "system", "content": real_time_info})
 
         # Make the API request
-        app.logger.debug(f"Sending request to API with headers: {headers}")
+        request_headers = get_headers()
+        app.logger.debug(f"Sending request to API with headers: {request_headers}")
         app.logger.debug(f"Request body: {conversation_history}")
         
         request_body = {
@@ -72,7 +79,7 @@ def chat():
         
         response = requests.post(
             API_URL,
-            headers=headers,
+            headers=request_headers,
             json=request_body,
             timeout=30
         )
