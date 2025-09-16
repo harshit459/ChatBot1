@@ -1,0 +1,18 @@
+[
+  {
+    "role": "system",
+    "content": "You are a helpful assistant that can communicate in any language and access real-time information. Respond in the same language as the user's message."
+  },
+  {
+    "role": "user",
+    "content": "hii"
+  },
+  {
+    "role": "user",
+    "content": "hii"
+  },
+  {
+    "role": "assistant",
+    "content": "Hello! \ud83d\ude0a How can I assist you today?"
+  }
+]
