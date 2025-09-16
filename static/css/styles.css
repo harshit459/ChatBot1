@@ -14,6 +14,34 @@ body {
     align-items: center;
 }
 
+/* Thinking animation */
+.thinking {
+    display: flex;
+    align-items: center;
+    font-style: italic;
+    color: #666;
+}
+
+.thinking .dots {
+    display: inline-block;
+    position: relative;
+    width: 20px;
+    margin-left: 4px;
+}
+
+.thinking .dots::after {
+    content: '...';
+    position: absolute;
+    left: 0;
+    animation: dots 1.5s infinite;
+}
+
+@keyframes dots {
+    0%, 20% { content: '.'; }
+    40% { content: '..'; }
+    60%, 100% { content: '...'; }
+}
+
 /* Chat container */
 .chat-container {
     width: 90%;
