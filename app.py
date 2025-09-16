@@ -16,8 +16,14 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Constants
-API_KEY = os.getenv('API_KEY', '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')
-SEARCH_API_KEY = os.getenv('SEARCH_API_KEY', '0fce37158be0d3b9fe4fdadb58c4327eb092cd30f68bda8a1d601172f509c524')
+API_KEY = os.getenv('API_KEY')
+if not API_KEY:
+    raise ValueError("API_KEY environment variable is not set")
+    
+SEARCH_API_KEY = os.getenv('SEARCH_API_KEY')
+if not SEARCH_API_KEY:
+    raise ValueError("SEARCH_API_KEY environment variable is not set")
+    
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
 SERPAPI_URL = "https://serpapi.com/search"
 
@@ -74,18 +80,18 @@ def chat():
             if search_result:
                 enhanced_message = f"{user_message}\n\nContext: {search_result}"
 
-        # Prepare headers with all required fields
+        # Prepare headers with all required fields for OpenRouter
         headers = {
             "Authorization": f"Bearer {API_KEY}",
-            "Content-Type": "application/json",
-            "HTTP-Referer": "https://python-chatbot.com",
-            "X-Title": "Python Chatbot"
+            "HTTP-Referer": f"{request.headers.get('Origin', 'https://python-chatbot.com')}",
+            "Content-Type": "application/json"
         }
 
-        # Log API key for debugging (first 10 chars)
-        app.logger.debug(f"Using API key starting with: {API_KEY[:10]}...")
+        # Log request information for debugging
+        app.logger.info(f"Request headers: {headers}")
+        app.logger.info(f"Using API key: {API_KEY[:10]}...")
 
-        # Prepare request with a simpler model
+        # Prepare request with a specific model
         request_body = {
             "messages": [
                 {"role": "system", "content": "You are a helpful assistant that provides quick and concise responses."},
@@ -94,9 +100,7 @@ def chat():
             "model": "mistralai/mistral-small-3.2-24b-instruct:free",
             "temperature": 0.7,
             "max_tokens": 150,
-            "headers": {
-                "HTTP-Referer": "https://python-chatbot.com"
-            }
+            "stream": False
         }
 
         # Make API request
@@ -130,21 +134,22 @@ def chat():
         error_msg = str(e)
         app.logger.error(f"API request failed: {error_msg}")
         
-        if hasattr(e.response, 'text'):
+        if hasattr(e, 'response') and e.response is not None:
             try:
                 error_data = e.response.json()
-                error_msg = error_data.get('error', {}).get('message', error_msg)
-            except:
-                error_msg = e.response.text
-            app.logger.error(f"API response: {error_msg}")
-            
-        # Check for specific error types
-        if e.response and e.response.status_code == 401:
-            return jsonify({"error": "Invalid API key. Please check your OpenRouter API key and try again."}), 401
-        elif e.response and e.response.status_code == 429:
-            return jsonify({"error": "Too many requests. Please try again later."}), 429
-            
-        return jsonify({"error": f"Failed to communicate with API: {error_msg}"}), 500
+                error_detail = error_data.get('error', {}).get('message', '')
+                app.logger.error(f"API error details: {error_detail}")
+                
+                if "User not found" in error_detail or "user not found" in error_detail.lower():
+                    return jsonify({"error": "Authentication failed. Please check if your API key is valid and properly configured."}), 401
+                elif "rate limit" in error_detail.lower():
+                    return jsonify({"error": "Rate limit exceeded. Please try again later."}), 429
+                else:
+                    return jsonify({"error": f"API Error: {error_detail}"}), e.response.status_code
+            except json.JSONDecodeError:
+                app.logger.error(f"Raw API response: {e.response.text}")
+                
+        return jsonify({"error": "Failed to communicate with API. Please try again later."}), 500
         
     except json.JSONDecodeError as e:
         app.logger.error(f"Failed to parse API response: {str(e)}")
