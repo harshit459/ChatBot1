@@ -72,8 +72,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 headers: {
                     'Content-Type': 'application/json'
                 },
+                credentials: 'include',  // This is important for cookies
                 body: JSON.stringify({ message: message })
             });
+
+            if (response.status === 401) {
+                // Redirect to login page if not authenticated
+                window.location.href = '/login';
+                return;
+            }
 
             const data = await response.json();
             

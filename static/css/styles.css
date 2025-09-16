@@ -60,11 +60,39 @@ body {
     background-color: #007bff;
     color: white;
     border-radius: 10px 10px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .chat-header h1 {
     font-size: 1.5rem;
     font-weight: 600;
+}
+
+.user-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.username {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.logout-btn {
+    color: white;
+    text-decoration: none;
+    background-color: rgba(255, 255, 255, 0.1);
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 0.9rem;
+    transition: background-color 0.2s;
+}
+
+.logout-btn:hover {
+    background-color: rgba(255, 255, 255, 0.2);
 }
 
 /* Messages area */

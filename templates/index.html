@@ -10,6 +10,10 @@
     <div class="chat-container">
         <div class="chat-header">
             <h1>AI Chatbot</h1>
+            <div class="user-controls">
+                <span class="username">Welcome, {{ username }}</span>
+                <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+            </div>
         </div>
         <div class="chat-messages" id="chat-messages">
             <!-- Messages will be inserted here by JavaScript -->
