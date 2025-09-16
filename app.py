@@ -74,15 +74,18 @@ def chat():
             if search_result:
                 enhanced_message = f"{user_message}\n\nContext: {search_result}"
 
-        # Prepare headers
+        # Prepare headers with all required fields
         headers = {
             "Authorization": f"Bearer {API_KEY}",
             "Content-Type": "application/json",
-            "HTTP-Referer": request.headers.get('Origin', '*'),
+            "HTTP-Referer": "https://python-chatbot.com",
             "X-Title": "Python Chatbot"
         }
 
-        # Prepare request
+        # Log API key for debugging (first 10 chars)
+        app.logger.debug(f"Using API key starting with: {API_KEY[:10]}...")
+
+        # Prepare request with a simpler model
         request_body = {
             "messages": [
                 {"role": "system", "content": "You are a helpful assistant that provides quick and concise responses."},
@@ -90,7 +93,10 @@ def chat():
             ],
             "model": "mistralai/mistral-small-3.2-24b-instruct:free",
             "temperature": 0.7,
-            "max_tokens": 1000
+            "max_tokens": 150,
+            "headers": {
+                "HTTP-Referer": "https://python-chatbot.com"
+            }
         }
 
         # Make API request
@@ -121,10 +127,24 @@ def chat():
         return jsonify({"error": "Request timed out"}), 504
         
     except requests.RequestException as e:
-        app.logger.error(f"API request failed: {str(e)}")
+        error_msg = str(e)
+        app.logger.error(f"API request failed: {error_msg}")
+        
         if hasattr(e.response, 'text'):
-            app.logger.error(f"API response: {e.response.text}")
-        return jsonify({"error": "Failed to communicate with API. Please check your API key and try again."}), 500
+            try:
+                error_data = e.response.json()
+                error_msg = error_data.get('error', {}).get('message', error_msg)
+            except:
+                error_msg = e.response.text
+            app.logger.error(f"API response: {error_msg}")
+            
+        # Check for specific error types
+        if e.response and e.response.status_code == 401:
+            return jsonify({"error": "Invalid API key. Please check your OpenRouter API key and try again."}), 401
+        elif e.response and e.response.status_code == 429:
+            return jsonify({"error": "Too many requests. Please try again later."}), 429
+            
+        return jsonify({"error": f"Failed to communicate with API: {error_msg}"}), 500
         
     except json.JSONDecodeError as e:
         app.logger.error(f"Failed to parse API response: {str(e)}")
