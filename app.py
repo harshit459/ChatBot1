@@ -11,8 +11,9 @@ CORS(app)  # Enable CORS for all routes
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
 
-API_KEY = "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"
-SEARCH_API_KEY = "0fce37158be0d3b9fe4fdadb58c4327eb092cd30f68bda8a1d601172f509c524"
+# Get API keys from environment variables
+API_KEY = os.getenv('API_KEY', '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')
+SEARCH_API_KEY = os.getenv('SEARCH_API_KEY', '0fce37158be0d3b9fe4fdadb58c4327eb092cd30f68bda8a1d601172f509c524')
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
 # For Vercel, we'll use in-memory storage instead of file storage
 conversation_history = [
@@ -22,7 +23,7 @@ conversation_history = [
 headers = {
     "Authorization": f"Bearer {API_KEY}",
     "Content-Type": "application/json",
-    "HTTP-Referer": "https://your-vercel-domain.vercel.app",  # Will update after deployment
+    "HTTP-Referer": "https://chat-bot1-umber.vercel.app/",  # Will update after deployment
     "X-Title": "Python Chatbot",
     "OpenAI-Organization": "org-123"  # Required by OpenRouter 
 }
