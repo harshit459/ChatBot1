@@ -11,9 +11,13 @@ CORS(app)  # Enable CORS for all routes
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
 
+# Load environment variables
+from dotenv import load_dotenv
+load_dotenv()
+
 # Constants
-API_KEY = "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"
-SEARCH_API_KEY = "0fce37158be0d3b9fe4fdadb58c4327eb092cd30f68bda8a1d601172f509c524"
+API_KEY = os.getenv('API_KEY', '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')
+SEARCH_API_KEY = os.getenv('SEARCH_API_KEY', '0fce37158be0d3b9fe4fdadb58c4327eb092cd30f68bda8a1d601172f509c524')
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
 SERPAPI_URL = "https://serpapi.com/search"
 
@@ -84,7 +88,7 @@ def chat():
                 {"role": "system", "content": "You are a helpful assistant that provides quick and concise responses."},
                 {"role": "user", "content": enhanced_message}
             ],
-            "model": "deepseek/deepseek-chat-v3.1:free",
+            "model": "mistralai/mistral-small-3.2-24b-instruct:free",
             "temperature": 0.7,
             "max_tokens": 1000
         }
@@ -131,4 +135,6 @@ def chat():
         return jsonify({"error": "Internal server error"}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Use production config when deployed
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
