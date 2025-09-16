@@ -31,11 +31,11 @@ def get_headers():
     }
 
 # Function to trim conversation history
-def trim_conversation_history():
-    global conversation_history
+def trim_conversation_history(conversation_history):
     # Keep system message and last 10 messages
     if len(conversation_history) > 11:
-        conversation_history = [conversation_history[0]] + conversation_history[-10:]
+        return [conversation_history[0]] + conversation_history[-10:]
+    return conversation_history
 
 @app.route('/')
 def home():
@@ -102,9 +102,13 @@ def chat():
         
         # Add the bot's response to conversation history
         conversation_history.append({"role": "assistant", "content": bot_message})
-        trim_conversation_history()  # Trim history to maintain context window
+        # Trim history and get the updated version
+        conversation_history = trim_conversation_history(conversation_history)
         
-        return jsonify({"response": bot_message})
+        return jsonify({
+            "response": bot_message,
+            "status": "success"
+        })
     
     except requests.exceptions.RequestException as e:
         app.logger.error(f"Request error: {str(e)}")
@@ -119,19 +123,25 @@ def chat():
         return jsonify({"error": str(e)}), 500
 
 def web_search(query):
-    params = {
-        "q": query,
-        "api_key": SEARCH_API_KEY,
-        "num": 3  # Top 3 results
-    }
-    response = requests.get("https://serpapi.com/search", params=params)
+    try:
+        params = {
+            "q": query,
+            "api_key": SEARCH_API_KEY,
+            "num": 3  # Top 3 results
+        }
+        response = requests.get("https://serpapi.com/search", params=params, timeout=10)
 
-    if response.status_code == 200:
-        results = response.json().get("organic_results", [])
-        snippets = "\n".join([r.get("snippet") for r in results if "snippet" in r])
-        return f"🌐 Real-time search results:\n{snippets}"
-    else:
-        return "⚠️ Could not fetch real-time data."
+        if response.status_code == 200:
+            data = response.json()
+            if "organic_results" in data:
+                results = data["organic_results"]
+                snippets = [r.get("snippet", "") for r in results if "snippet" in r]
+                if snippets:
+                    return f"🌐 Real-time search results:\n{' '.join(snippets)}"
+        return None  # Return None if no results or any issues
+    except Exception as e:
+        app.logger.error(f"Web search error: {str(e)}")
+        return None
 
 if __name__ == '__main__':
     app.run(debug=True)
