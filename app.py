@@ -362,7 +362,7 @@ def chat():
         
         request_body = {
             "messages": conversation[-5:],
-            "model": "mistralai/mistral-small-3.2-24b-instruct:free",
+            "model": "openai/gpt-oss-120b:free",
             "temperature": 0.5,  # Lower temperature for more consistent formatting
             "max_tokens": 500,   # Increased token limit for better formatting
             "stream": False,
