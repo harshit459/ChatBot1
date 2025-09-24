@@ -357,6 +357,7 @@ def chat():
         headers = {
             "Authorization": f"Bearer {os.getenv('API_KEY')}",
             "HTTP-Referer": request.headers.get('Origin', 'https://python-chatbot.com'),
+            "X-Title": "ChatBot1",
             "Content-Type": "application/json"
         }
         
@@ -419,9 +420,9 @@ Formatting rules:
 
         # Get response from API
         response = requests.post(
-            "https://openrouter.ai/api/v1/chat/completions",
+            url="https://openrouter.ai/api/v1/chat/completions",
             headers=headers,
-            json=request_body,
+            data=json.dumps(request_body),
             timeout=30
         )
         
