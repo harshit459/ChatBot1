@@ -363,7 +363,7 @@ def chat():
         
         request_body = {
             "messages": conversation[-5:],
-            "model": "openai/gpt-oss-120b:free",
+            "model": "x-ai/grok-4-fast:free",
             "temperature": 0.5,  # Lower temperature for more consistent formatting
             "max_tokens": 500,   # Increased token limit for better formatting
             "stream": False,
@@ -419,12 +419,20 @@ Formatting rules:
             })
 
         # Get response from API
+        app.logger.debug(f"Making API request to OpenRouter...")
+        app.logger.debug(f"Headers: {headers}")
+        app.logger.debug(f"Request body: {json.dumps(request_body, indent=2)}")
+        
         response = requests.post(
             url="https://openrouter.ai/api/v1/chat/completions",
             headers=headers,
             data=json.dumps(request_body),
             timeout=30
         )
+        
+        app.logger.debug(f"Response status code: {response.status_code}")
+        app.logger.debug(f"Response headers: {dict(response.headers)}")
+        app.logger.debug(f"Response text: {response.text}")
         
         response.raise_for_status()
         response_data = response.json()
@@ -540,6 +548,15 @@ Formatting rules:
             }
         })
         
+    except requests.exceptions.HTTPError as e:
+        app.logger.error(f"HTTP Error: {str(e)}")
+        app.logger.error(f"Response status code: {e.response.status_code}")
+        app.logger.error(f"Response text: {e.response.text}")
+        return jsonify({"error": f"API Error: {e.response.status_code} - {e.response.text}"}), 500
+    except requests.exceptions.RequestException as e:
+        app.logger.error(f"Request error: {str(e)}")
+        app.logger.error(traceback.format_exc())
+        return jsonify({"error": f"Request failed: {str(e)}"}), 500
     except Exception as e:
         app.logger.error(f"Chat error: {str(e)}")
         app.logger.error(traceback.format_exc())
